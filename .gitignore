@@ -1,0 +1,6 @@
+
+output/*
+!output/.gitinclude
+
+build/*
+!build/.gitinclude
