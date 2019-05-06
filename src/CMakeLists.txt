@@ -11,7 +11,7 @@ find_package(Armadillo REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
 
 file(GLOB exam_SRC
-    "./src/*.cpp"
+    "*.cpp"
 )
 
 include_directories(${ARMADILLO_INCLUDE_DIRS} ${HDF5_INCLUDE_DIR})
