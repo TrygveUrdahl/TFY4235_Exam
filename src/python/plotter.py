@@ -18,12 +18,12 @@ def LoadComplexData(fileReal, fileImag):
     hfReal = h5py.File(fileReal, 'r')
     hfImag = h5py.File(fileImag, 'r')
 
-    statesReal = hfReal.get('dataset')[()]
-    statesImag = hfImag.get('dataset')[()]
+    dataReal = hfReal.get('dataset')[()]
+    dataImag = hfImag.get('dataset')[()]
 
-    states = statesReal + statesImag * 1j
-    states = states.transpose()
-    return states
+    data = dataReal + dataImag * 1j
+    data = data.transpose()
+    return data
 
 def LoadData(file):
     """
@@ -31,5 +31,20 @@ def LoadData(file):
     """
     hf = h5py.File(file, 'r')
     data = hf.get('dataset')[()]
-    states = states.transpose()
-    return states
+    data = data.transpose()
+    return data
+
+def plotAtomConfig(file):
+    data = LoadData(file)
+    plt.matshow(data)
+    plt.show()
+
+def plotEnthalpys(file):
+    data = LoadData(file)
+    xaxis = np.linspace(0,1,data.size)
+    plt.plot(xaxis, data)
+    plt.show()
+
+
+# plotAtomConfig("./output/config.h5")
+plotEnthalpys("./output/enthalpys.h5")

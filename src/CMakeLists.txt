@@ -8,8 +8,6 @@ find_package(OpenMP)
 find_package(HDF5 REQUIRED)
 find_package(Armadillo REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
-
 file(GLOB exam_SRC
     "*.cpp"
 )
