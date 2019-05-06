@@ -19,7 +19,8 @@ arma::vec generateAtomTypeVec(int numAtoms, double xA) {
       atomType(i) = 1;
     }
   }
-  return arma::shuffle(atomType);
+  // return arma::shuffle(atomType);
+  return atomType;
 }
 
 // Holds value 0 for A and 1 for B
@@ -83,19 +84,24 @@ double H(int atom1) {
   }
 }
 
-arma::sp_mat generateHtot(int N, int M, const arma::vec &atomType,
-                          const arma::vec &neighbourList) {
+arma::sp_mat generateHtot(int N, int M, double xA) {
   int numAtoms = N * M;
-  double r = 1.3;
+  double r = 1.3; // Lattice constant
   arma::sp_mat Htot(numAtoms, numAtoms);
+  arma::vec atomType = generateAtomTypeVec(numAtoms, xA);
+  arma::vec neighbourList = generateNeighbourVec(N, M);
 
   for (int i = 0; i < numAtoms; i++) {
     const int currentAtom = atomType(i);
     Htot(i,                    i) = H(currentAtom); // H_n
-    Htot(neighbourList(i + 0), i) = V(r, currentAtom, atomType(neighbourList(i + 0))); // V_nn
-    Htot(neighbourList(i + 1), i) = V(r, currentAtom, atomType(neighbourList(i + 1))); //V_nn
-    Htot(neighbourList(i + 2), i) = V(r, currentAtom, atomType(neighbourList(i + 2))); //V_nn
-    Htot(neighbourList(i + 3), i) = V(r, currentAtom, atomType(neighbourList(i + 3))); //V_nn
+    Htot(i, neighbourList(4 * i + 0)) = V(r, currentAtom, atomType(neighbourList(4 * i + 0))); // V_nn
+    Htot(i, neighbourList(4 * i + 1)) = V(r, currentAtom, atomType(neighbourList(4 * i + 1))); //V_nn
+    Htot(i, neighbourList(4 * i + 2)) = V(r, currentAtom, atomType(neighbourList(4 * i + 2))); //V_nn
+    Htot(i, neighbourList(4 * i + 3)) = V(r, currentAtom, atomType(neighbourList(4 * i + 3))); //V_nn
   }
   return Htot;
+}
+
+double getFreeEnergy() {
+
 }

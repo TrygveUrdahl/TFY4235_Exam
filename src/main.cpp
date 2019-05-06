@@ -19,11 +19,9 @@ int main(int argc, char** argv) {
   const int M = atoi(argv[2]);
   const double xA = 0.5;
   const int numAtoms = N * M;
-  arma::vec atomType = generateAtomTypeVec(numAtoms, xA);
   arma::vec neighbourList = generateNeighbourVec(N, M);
-
-  arma::sp_mat Htot = generateHtot(N, M, atomType, neighbourList);
-  std::cout << Htot << std::endl;
+  arma::sp_mat Htot = generateHtot(N, M, xA);
+  std::cout << arma::mat(Htot) << std::endl;
 
 
   return 0;
