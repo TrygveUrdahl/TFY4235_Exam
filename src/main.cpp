@@ -17,11 +17,13 @@ int main(int argc, char** argv) {
   }
   const int N = atoi(argv[1]);
   const int M = atoi(argv[2]);
+  const double xA = 0.5;
   const int numAtoms = N * M;
+  arma::vec atomType = generateAtomTypeVec(numAtoms, xA);
+  arma::vec neighbourList = generateNeighbourVec(N, M);
 
-  arma::vec neighList = generateNeighbourVec(N, M);
-  std::cout << neighList << std::endl;
-  arma::sp_mat Htot(numAtoms, numAtoms);
+  arma::sp_mat Htot = generateHtot(N, M, atomType, neighbourList);
+  std::cout << Htot << std::endl;
 
 
   return 0;
