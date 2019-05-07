@@ -3,6 +3,7 @@
 #include <armadillo>
 #include <chrono>
 #include <omp.h>
+#include <random>
 
 #include "montecarlo.hpp"
 
@@ -22,6 +23,14 @@ arma::uvec generateAtomTypeVec(int numAtoms, double xA) {
     }
   }
   return arma::shuffle(atomType);
+}
+
+arma::uvec permuteAtomTypeVec(const arma::uvec &atomType, const arma::uvec &neighbourVec) {
+  arma::uvec atomTypePermuted = atomType;
+  int index = arma::randi<int>(arma::distr_param(0, atomType.n_elem - 1));
+  int swap_index = arma::randi<int>(arma::distr_param(0, 3));
+  std::swap(atomTypePermuted(index), atomTypePermuted(neighbourVec(4*index + swap_index)));
+  return atomTypePermuted;
 }
 
 // Holds value 0 for A and 1 for B
@@ -90,8 +99,6 @@ arma::sp_mat generateHtot(int N, int M, double xA, const arma::uvec &atomType,
   const int numAtoms = N * M;
   double r = 1.3; // Lattice constant
   arma::sp_mat Htot(numAtoms, numAtoms);
-  //const arma::uvec atomType = generateAtomTypeVec(numAtoms, xA);
-  //const arma::uvec neighbourList = generateNeighbourVec(N, M);
 
   for (int i = 0; i < numAtoms; i++) {
     const int currentAtom = atomType(i);
@@ -120,20 +127,20 @@ double getFreeEnergy(double beta, const arma::vec &eigvals) {
   return freeEnergy;
 }
 
-double getEnthalpy(int N, int M, double beta, double xA, int iterations) {
+double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int maxIterations) {
   const int numAtoms = N * M;
   arma::vec eigvalsA, eigvalsB, eigvalsBest;
-  arma::uvec atomTypeA = generateAtomTypeVec(numAtoms, 1.0);
-  arma::uvec atomTypeB = generateAtomTypeVec(numAtoms, 0.0);
+  arma::uvec atomTypesA = generateAtomTypeVec(numAtoms, 1.0);
+  arma::uvec atomTypesB = generateAtomTypeVec(numAtoms, 0.0);
   arma::uvec neighbourList = generateNeighbourVec(N, M);
-  arma::sp_mat HtotA = generateHtot(N, M, 1.0, atomTypeA, neighbourList);
-  arma::sp_mat HtotB = generateHtot(N, M, 0.0, atomTypeB, neighbourList);
+  arma::sp_mat HtotA = generateHtot(N, M, 1.0, atomTypesA, neighbourList);
+  arma::sp_mat HtotB = generateHtot(N, M, 0.0, atomTypesB, neighbourList);
   solveSystem(eigvalsA, HtotA);
   solveSystem(eigvalsB, HtotB);
   double fA = getFreeEnergy(beta, eigvalsA);
   double fB = getFreeEnergy(beta, eigvalsB);
 
-  arma::uvec bestShuffle = monteCarloBestShuffle(N, M, xA, beta, iterations);
+  arma::uvec bestShuffle = monteCarloBestShuffle(N, M, xA, beta, iterations, maxIterations);
   arma::sp_mat HtotBest = generateHtot(N, M, xA, bestShuffle, neighbourList);
   solveSystem(eigvalsBest, HtotBest);
   double fBest = getFreeEnergy(beta, eigvalsBest);
@@ -141,13 +148,40 @@ double getEnthalpy(int N, int M, double beta, double xA, int iterations) {
   return (fBest - fA*xA - fB * (1.0 - xA));
 }
 
-arma::vec getEnthalpyChanges(int N, int M, double beta, int iterations) {
-  const int points = 50;
+arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma::uvec &iterationCount) {
+  const int points = 100;
+  const int averageIterations = 5;
+  iterationCount.resize(points);
+  iterationCount.fill(0);
   arma::vec enthalpys(points);
+  arma::vec enthalpysAveraged(points, arma::fill::zeros);
   arma::vec xAs = arma::linspace(0, 1, points);
-  #pragma omp parallel for
-  for (int i = 0; i < points; i++) {
-    enthalpys(i) = getEnthalpy(N, M, beta, xAs(i), iterations);
+  for (int ii = 0; ii < averageIterations; ii++) {
+    arma::uvec iterationCountLocal(points);
+    #pragma omp parallel for
+    for (int i = 0; i < points; i++) {
+      int iterations = 0;
+      enthalpys(i) = getEnthalpy(N, M, beta, xAs(i), iterations, maxIterations);
+      iterationCountLocal(i) = iterations;
+    }
+    iterationCount += iterationCountLocal;
+    enthalpysAveraged += enthalpys;
   }
-  return enthalpys;
+  iterationCount /= averageIterations;
+  enthalpysAveraged /= averageIterations;
+  std::cout << enthalpysAveraged << std::endl;
+  return enthalpysAveraged;
+}
+
+int hammingDistance(const arma::uvec &atomState1, const arma::uvec &atomState2) {
+  int dist = 0;
+  if (atomState1.n_elem != atomState2.n_elem) {
+    return std::numeric_limits<int>::max();
+  }
+  for (int i = 0; i <atomState1.n_elem; i++) {
+    if (atomState1(i) != atomState2(i)) {
+      dist++;
+    }
+  }
+  return dist;
 }

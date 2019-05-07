@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
 import h5py
-import pandas as pd
 import matplotlib as mpl
 
 mpl.rcParams['mathtext.fontset'] = 'cm'
+mpl.rcParams['font.serif'] = 'CMU Serif'
 mpl.rcParams['font.family'] = 'serif'
-mpl.rcParams['font.serif'] = 'CMU Serif Roman 2'
 
 def LoadComplexData(fileReal, fileImag):
     """
@@ -34,17 +33,51 @@ def LoadData(file):
     data = data.transpose()
     return data
 
+
 def plotAtomConfig(file):
     data = LoadData(file)
-    plt.matshow(data)
+    fig, axes = plt.subplots()
+    axes.set_xlabel("")
+    axes.set_ylabel("")
+    axes.matshow(data)
+    fig.tight_layout()
+    #plt.savefig("./output/atomconfig.png")
+    plt.show()
+
+def plotEigvals(file):
+    data = LoadData(file)
+    fig, axes = plt.subplots()
+    xaxis = [i for i in range(data.size)]
+    axes.set_xlabel("")
+    axes.set_ylabel("Eigenenergy")
+    axes.plot(xaxis, data)
+    fig.tight_layout()
+    #plt.savefig("./output/eigenenergy.png")
     plt.show()
 
 def plotEnthalpys(file):
+    fig, axes = plt.subplots()
     data = LoadData(file)
     xaxis = np.linspace(0,1,data.size)
-    plt.plot(xaxis, data)
+    axes.set_xlabel("$x_A$")
+    axes.set_ylabel("$\Delta F(a,x_A) [eV]$")
+    axes.plot(xaxis, data)
+    fig.tight_layout()
+    #plt.savefig("./output/enthalpys.png")
     plt.show()
 
+def plotIterationCount(file):
+    fig, axes = plt.subplots()
+    data = LoadData(file)
+    xaxis = np.linspace(0,1,data.size)
+    axes.set_xlabel("$x_A$")
+    axes.set_ylabel("Iterations")
+    axes.plot(xaxis, data)
+    fig.tight_layout()
+    #plt.savefig("./output/iterationcount.png")
+    plt.show()
 
-# plotAtomConfig("./output/config.h5")
+#plotAtomConfig("./output/config.h5")
+#plotEigvals("./output/eigvals.h5")
 plotEnthalpys("./output/enthalpys.h5")
+plotIterationCount("./output/iterationCount.h5")
