@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   else if (job == 1) {
     std::cout << "Find a best configuration to minimize free energy" << std::endl;
     arma::uvec bestConfig = monteCarloBestShuffleParallel(N, M, xA, beta, iterations);
-    std::cout << bestConfig << std::endl;
+    // std::cout << bestConfig << std::endl;
     arma::umat bestConfigMat = arma::reshape(arma::umat(bestConfig.memptr(), bestConfig.n_elem, true, false), N, M);
     bestConfigMat.save("../output/config.h5", arma::hdf5_binary);
   }
@@ -54,6 +54,6 @@ int main(int argc, char** argv) {
     enthalpys.save("../output/enthalpys.h5", arma::hdf5_binary);
     iterationCount.save("../output/iterationCount.h5", arma::hdf5_binary);
   }
-
+  std::cout << "Program finished! " << std::endl;
   return 0;
 }

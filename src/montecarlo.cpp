@@ -15,8 +15,7 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
   arma::uvec bestAtomConfig;
   double bestEnergy = std::numeric_limits<double>::max();
   int notChanged = 0;
-  for (int i = 0; i < maxIterations * 0.5; i++) {
-    iterations++;
+  for (int i = 0; i < maxIterations * 0.1; i++) {
     atomType = generateAtomTypeVec(numAtoms, xA);
     arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourList);
     arma::vec eigvals;
@@ -29,7 +28,7 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
   }
   atomType = bestAtomConfig;
   arma::uvec nextUse = atomType;
-  for (int i = 0; i < maxIterations * 0.5; i++) {
+  for (int i = 0; i < maxIterations; i++) {
     iterations++;
     atomType = permuteAtomTypeVec(nextUse, neighbourList);
     arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourList);
@@ -37,7 +36,7 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
     solveSystem(eigvals, Htot);
     double freeEnergy = getFreeEnergy(beta, eigvals);
     double deltaEnergy = freeEnergy - bestEnergy;
-    if (deltaEnergy <= 0.0) {
+    if (deltaEnergy < 0.0) {
       // std::cout << " delta < 0: "<< deltaEnergy << std::endl;
       bestEnergy = freeEnergy;
       bestAtomConfig = atomType;
@@ -46,6 +45,7 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
     }
     else if(std::exp(-deltaEnergy * beta) >= arma::randu<double>()) {
       // std::cout << std::exp(-deltaEnergy * beta) << std::endl;
+      // std::cout << "deltaEnergy: " << deltaEnergy << std::endl;
       nextUse = atomType;
       notChanged++;
     }
@@ -63,6 +63,50 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
   return bestAtomConfig;
 }
 
+
+arma::uvec monteCarloBestShuffleParallel(int N, int M, double xA, double beta, int maxIterations) {
+  const double numAtoms = N * M;
+  const arma::uvec neighbourList = generateNeighbourVec(N, M);
+  arma::uvec atomType = generateAtomTypeVec(numAtoms, xA);
+  arma::uvec bestAtomConfig;
+  double bestEnergy = std::numeric_limits<double>::max();
+  for (int i = 0; i < maxIterations * 0.1; i++) {
+    atomType = generateAtomTypeVec(numAtoms, xA);
+    arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourList);
+    arma::vec eigvals;
+    solveSystem(eigvals, Htot);
+    double freeEnergy = getFreeEnergy(beta, eigvals);
+    if (freeEnergy < bestEnergy) {
+      bestEnergy = freeEnergy;
+      bestAtomConfig = atomType;
+    }
+  }
+  atomType = bestAtomConfig;
+  arma::uvec nextUse = atomType;
+  for (int i = 0; i < maxIterations; i++) {
+    atomType = permuteAtomTypeVec(nextUse, neighbourList);
+    arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourList);
+    arma::vec eigvals;
+    solveSystem(eigvals, Htot);
+    double freeEnergy = getFreeEnergy(beta, eigvals);
+    double deltaEnergy = freeEnergy - bestEnergy;
+    if (deltaEnergy <= 0.0) {
+      // std::cout << " delta < 0: "<< deltaEnergy << std::endl;
+      bestEnergy = freeEnergy;
+      bestAtomConfig = atomType;
+      nextUse = atomType;
+    }
+    else if(std::exp(-deltaEnergy * beta) >= arma::randu<double>()) {
+      // std::cout << std::exp(-deltaEnergy * beta) << std::endl;
+      // std::cout << "deltaEnergy: " << deltaEnergy << std::endl;
+      nextUse = atomType;
+    }
+  }
+  std::cout << "bestEnergy: " << bestEnergy << std::endl;
+  return bestAtomConfig;
+}
+
+/*
 arma::uvec monteCarloBestShuffleParallel(int N, int M, double xA, double beta, int maxIterations) {
   const double numAtoms = N * M;
   arma::uvec bestAtomConfig;
@@ -84,3 +128,4 @@ arma::uvec monteCarloBestShuffleParallel(int N, int M, double xA, double beta, i
   std::cout << "bestEnergy: " << bestEnergy << std::endl;
   return bestAtomConfig;
 }
+*/

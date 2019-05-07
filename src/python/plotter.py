@@ -39,9 +39,11 @@ def plotAtomConfig(file):
     fig, axes = plt.subplots()
     axes.set_xlabel("")
     axes.set_ylabel("")
-    axes.matshow(data)
+    im = axes.matshow(data)
+    #fig.colorbar(im)
+    plt.axis("off")
     fig.tight_layout()
-    #plt.savefig("./output/atomconfig.png")
+    #plt.savefig("./output/atomconfig275.pdf")
     plt.show()
 
 def plotEigvals(file):
@@ -52,7 +54,7 @@ def plotEigvals(file):
     axes.set_ylabel("Eigenenergy")
     axes.plot(xaxis, data)
     fig.tight_layout()
-    #plt.savefig("./output/eigenenergy.png")
+    #plt.savefig("./output/eigenenergy.pdf")
     plt.show()
 
 def plotEnthalpys(file):
@@ -63,7 +65,7 @@ def plotEnthalpys(file):
     axes.set_ylabel("$\Delta F(a,x_A) [eV]$")
     axes.plot(xaxis, data)
     fig.tight_layout()
-    #plt.savefig("./output/enthalpys.png")
+    plt.savefig("./output/enthalpys09.pdf")
     plt.show()
 
 def plotIterationCount(file):
@@ -74,10 +76,10 @@ def plotIterationCount(file):
     axes.set_ylabel("Iterations")
     axes.plot(xaxis, data)
     fig.tight_layout()
-    #plt.savefig("./output/iterationcount.png")
+    plt.savefig("./output/iterationcountAve.pdf")
     plt.show()
 
-#plotAtomConfig("./output/config.h5")
+plotAtomConfig("./output/config.h5")
 #plotEigvals("./output/eigvals.h5")
-plotEnthalpys("./output/enthalpys.h5")
-plotIterationCount("./output/iterationCount.h5")
+#plotEnthalpys("./output/enthalpys.h5")
+#plotIterationCount("./output/iterationCount.h5")

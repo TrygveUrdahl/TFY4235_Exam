@@ -3,7 +3,6 @@
 #include <armadillo>
 #include <chrono>
 #include <omp.h>
-#include <random>
 
 #include "montecarlo.hpp"
 
@@ -149,8 +148,8 @@ double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int ma
 }
 
 arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma::uvec &iterationCount) {
-  const int points = 100;
-  const int averageIterations = 5;
+  const int points = N * M;
+  const int averageIterations = 1;
   iterationCount.resize(points);
   iterationCount.fill(0);
   arma::vec enthalpys(points);
