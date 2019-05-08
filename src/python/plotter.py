@@ -103,8 +103,8 @@ def findPotentials():
     plt.savefig("./output/potentials.pdf", bbox_inches="tight", pad=0)
     plt.show()
 
-plotAtomConfig("./output/config.h5")
+#plotAtomConfig("./output/config.h5")
 #plotEigvals("./output/eigvals.h5")
 #plotEnthalpys("./output/enthalpys.h5")
 #plotIterationCount("./output/iterationCount.h5")
-#findPotentials()
+findPotentials()

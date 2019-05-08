@@ -18,6 +18,7 @@ numParticles = N * M
 numA = range(numParticles)
 numB = [numParticles - a for a in numA]
 logNumHamiltonians = [logNFac(numParticles) - logNFac(numA[i]) - logNFac(numB[i]) for i in range(numParticles)]
+#logNumHamiltoniansCum = [sum(logNumHamiltonians[0:i + 1]) for i in range(len(logNumHamiltonians))]
 xaxis = np.linspace(0,1,numParticles)
 
 
