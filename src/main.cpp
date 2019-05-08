@@ -29,20 +29,22 @@ int main(int argc, char** argv) {
     xA = std::atof(argv[5]);
   }
   const double beta = 10.0;
+  const double r = 1.3;
   const int numAtoms = N * M;
 
   if (job == 0) {
     std::cout << "Calculate eigenenergys of a system. " << std::endl;
     arma::uvec neighbourVec = generateNeighbourVec(N, M);
     arma::uvec atomType = generateAtomTypeVec(numAtoms, xA);
-    arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourVec);
+    arma::sp_mat Htot = generateHtot(N, M, xA, atomType, neighbourVec, r);
     arma::vec eigvals;
     solveSystem(eigvals, Htot);
     eigvals.save("../output/eigvals.h5", arma::hdf5_binary);
   }
   else if (job == 1) {
     std::cout << "Find a best configuration to minimize free energy" << std::endl;
-    arma::uvec bestConfig = monteCarloBestShuffleParallel(N, M, xA, beta, iterations);
+    int iterationsDone = 0;
+    arma::uvec bestConfig = monteCarloBestShuffle(N, M, xA, beta, iterationsDone, iterations, r);
     // std::cout << bestConfig << std::endl;
     arma::umat bestConfigMat = arma::reshape(arma::umat(bestConfig.memptr(), bestConfig.n_elem, true, false), N, M);
     bestConfigMat.save("../output/config.h5", arma::hdf5_binary);
@@ -50,7 +52,7 @@ int main(int argc, char** argv) {
   else if (job == 2) {
     std::cout << "Get enthalpy evolution of systems" << std::endl;
     arma::uvec iterationCount;
-    arma::vec enthalpys = getEnthalpyChanges(N, M, beta, iterations, iterationCount);
+    arma::vec enthalpys = getEnthalpyChanges(N, M, beta, iterations, iterationCount, r);
     enthalpys.save("../output/enthalpys.h5", arma::hdf5_binary);
     iterationCount.save("../output/iterationCount.h5", arma::hdf5_binary);
   }
