@@ -139,15 +139,15 @@ double getFreeEnergy(double beta, const arma::vec &eigvals) {
 double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int maxIterations, double r) {
   const int numAtoms = N * M;
   arma::vec eigvalsA, eigvalsB, eigvalsBest;
-  const arma::uvec atomTypesA = generateAtomTypeVec(numAtoms, 1.0);
-  const arma::uvec atomTypesB = generateAtomTypeVec(numAtoms, 0.0);
-  const arma::uvec neighbourList = generateNeighbourVec(N, M);
-  const arma::sp_mat HtotA = generateHtot(N, M, 1.0, atomTypesA, neighbourList, r);
-  const arma::sp_mat HtotB = generateHtot(N, M, 0.0, atomTypesB, neighbourList, r);
+  static const arma::uvec atomTypesA = generateAtomTypeVec(numAtoms, 1.0);
+  static const arma::uvec atomTypesB = generateAtomTypeVec(numAtoms, 0.0);
+  static const arma::uvec neighbourList = generateNeighbourVec(N, M);
+  static const arma::sp_mat HtotA = generateHtot(N, M, 1.0, atomTypesA, neighbourList, r);
+  static const arma::sp_mat HtotB = generateHtot(N, M, 0.0, atomTypesB, neighbourList, r);
   solveSystem(eigvalsA, HtotA);
   solveSystem(eigvalsB, HtotB);
-  const double fA = getFreeEnergy(beta, eigvalsA);
-  const double fB = getFreeEnergy(beta, eigvalsB);
+  static const double fA = getFreeEnergy(beta, eigvalsA);
+  static const double fB = getFreeEnergy(beta, eigvalsB);
 
   const arma::uvec bestShuffle = monteCarloBestShuffle(N, M, xA, beta, iterations, maxIterations, r);
   const arma::sp_mat HtotBest = generateHtot(N, M, xA, bestShuffle, neighbourList, r);

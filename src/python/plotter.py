@@ -43,7 +43,7 @@ def plotAtomConfig(file):
     #fig.colorbar(im)
     plt.axis("off")
     fig.tight_layout()
-    #plt.savefig("./output/atomconfig08.pdf", bbox_inches="tight", pad=0)
+    plt.savefig("./output/atomconfigww09.pdf", bbox_inches="tight", pad=0)
     plt.show()
 
 def plotEigvals(file):
@@ -65,7 +65,7 @@ def plotEnthalpys(file):
     axes.set_ylabel("$\Delta F(a,x_A) [eV]$")
     axes.plot(xaxis, data)
     fig.tight_layout()
-    plt.savefig("./output/enthalpysw09.pdf", bbox_inches="tight", pad=0)
+    #plt.savefig("./output/enthalpysw09.pdf", bbox_inches="tight", pad=0)
     plt.show()
 
 def plotIterationCount(file):
@@ -76,7 +76,7 @@ def plotIterationCount(file):
     axes.set_ylabel("Iterations")
     axes.plot(xaxis, data)
     fig.tight_layout()
-    plt.savefig("./output/iterationcountAve.pdf", bbox_inches="tight", pad=0)
+    plt.savefig("./output/iterationcount09.pdf", bbox_inches="tight", pad=0)
     plt.show()
 
 def findPotentials():
@@ -85,11 +85,13 @@ def findPotentials():
     Vaa = 5.0 * ((0.8/r)**6 - np.exp(-r/1.95))
     Vbb = 6.0 * ((0.7/r)**6 - np.exp(-r/0.70))
     Vab = 4.5 * ((0.85/r)**6 - np.exp(-r/1.90))
+    Vsum = 0.5*(Vaa + Vbb)
 
     fig, axes = plt.subplots()
     axes.plot(r, Vaa, label="$V_{AA}$")
     axes.plot(r, Vab, label="$V_{AB}$")
     axes.plot(r, Vbb, label="$V_{BB}$")
+    #axes.plot(r, Vsum, label="$(V_{AA}+V_{BB})/2$")
 
 
     axes.axvline(0.9, linestyle="--", color="black", alpha=0.5)
@@ -106,5 +108,5 @@ def findPotentials():
 #plotAtomConfig("./output/config.h5")
 #plotEigvals("./output/eigvals.h5")
 #plotEnthalpys("./output/enthalpys.h5")
-#plotIterationCount("./output/iterationCount.h5")
-findPotentials()
+plotIterationCount("./output/iterationCount.h5")
+#findPotentials()
