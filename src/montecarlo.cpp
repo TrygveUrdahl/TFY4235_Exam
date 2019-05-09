@@ -27,12 +27,12 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
       bestEnergy = freeEnergy;
       bestAtomConfig = atomType;
     }
-    if (freeEnergy > worstEnergy) {
-      worstEnergy = freeEnergy;
-      worstAtomConfig = atomType;
-    }
+    //if (freeEnergy > worstEnergy) {
+    //  worstEnergy = freeEnergy;
+    //  worstAtomConfig = atomType;
+    //}
   }
-  std::cout << "bestEnergyShuffle: " << bestEnergy << std::endl;
+  std::cout << "Best energy from random generation: " << bestEnergy << std::endl;
   atomType = bestAtomConfig;
   arma::uvec nextUse = atomType;
   double lastEnergy = bestEnergy;
@@ -58,39 +58,28 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
       else {
         notChanged++;
       }
-      //std::cout << "notChanged = 0 " << std::endl;
-      //notChanged -= maxIterations*0.002;
-      //notChanged = notChanged < 0 ? 0 : notChanged;
-      //notChanged = 0;
       nextUse = atomType;
       lastEnergy = freeEnergy;
     }
     else if(std::exp(-deltaEnergy * beta) >= arma::randu<double>()) {
       nextUse = atomType;
       lastEnergy = freeEnergy;
-      //std::cout << "notChanged++ " << std::endl;
       notChanged++;
     }
     else {
-      //std::cout << "notChanged++ " << std::endl;
       notChanged++;
     }
     if (notChanged > maxIterations * 0.2) {
       std::cout << "Converge! " << std::endl;
       converge = true;
     }
-
-    //if (hammingDistance(worstAtomConfig, bestAtomConfig) < (numAtoms * 0.05)) {
-    //  converge = true;
-    //}
-
     if (converge) {
-      std::cout << "bestEnergy: " << bestEnergy << std::endl;
-      std::cout << "iterations: " << iterations << std::endl;
+      std::cout << "Best energy after flipping: " << bestEnergy << std::endl;
+      std::cout << "Iterations run: " << iterations << std::endl;
       return bestAtomConfig;
     }
   }
-  std::cout << "bestEnergy: " << bestEnergy << std::endl;
-  std::cout << "iterations: " << iterations << std::endl;
+  std::cout << "Best energy after flipping: " << bestEnergy << std::endl;
+  std::cout << "Iterations run: " << iterations << std::endl;
   return bestAtomConfig;
 }

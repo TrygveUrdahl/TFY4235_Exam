@@ -21,7 +21,6 @@ logNumHamiltonians = [logNFac(numParticles) - logNFac(numA[i]) - logNFac(numB[i]
 #logNumHamiltoniansCum = [sum(logNumHamiltonians[0:i + 1]) for i in range(len(logNumHamiltonians))]
 xaxis = np.linspace(0,1,numParticles)
 
-
 fig, axes = plt.subplots()
 plt.plot(xaxis, logNumHamiltonians)
 axes.set_xlabel("$x_A$")

@@ -25,7 +25,8 @@ arma::uvec generateAtomTypeVec(int numAtoms, double xA) {
   return arma::shuffle(atomType);
 }
 
-// Swap two atoms in the atomType vector to create a small permutation.
+// Swap two atoms in the atomType vector to create a small permutation. Return
+// the swapped vector.
 arma::uvec permuteAtomTypeVec(const arma::uvec &atomType, const arma::uvec &neighbourVec) {
   arma::uvec atomTypePermuted = atomType;
   int index = arma::randi<int>(arma::distr_param(0, atomType.n_elem - 1));
@@ -35,6 +36,9 @@ arma::uvec permuteAtomTypeVec(const arma::uvec &atomType, const arma::uvec &neig
 }
 
 // Holds value 0 for A and 1 for B
+// Generate vector to keep track of neighbours of all atoms in the lattice. The
+// elements neigbourVec(4*i) - neighbourVec(4*i+3) hold the four neighbours of
+// atom number i.
 arma::uvec generateNeighbourVec(int N, int M) {
   const int numAtoms = N * M;
   const int numNeighbours = 4 * numAtoms;
@@ -46,6 +50,7 @@ arma::uvec generateNeighbourVec(int N, int M) {
     neighbourVec(4 * i + 2) = i + M; // Bottom
     neighbourVec(4 * i + 3) = i - 1; // Left
 
+    // Check all edge cases
     if ((i - M) < 0) { // Top loop-around
       neighbourVec(4 * i + 0) = i + numAtoms - M;
     }
@@ -62,7 +67,7 @@ arma::uvec generateNeighbourVec(int N, int M) {
   return neighbourVec;
 }
 
-// Return the potential between two atoms
+// Return the potential between two atoms depending on what types they are
 double V(double r, int atom1, int atom2) {
   if (atom1 == 0 && atom2 == 0) {
     constexpr double epsilonAA = 5.0;
@@ -97,7 +102,10 @@ double H(int atom1) {
   }
 }
 
-// Set up the Hamiltonian matrix
+// Set up the Hamiltonian matrix as explained in the report.
+// Diagonal elements will be the idividual atoms' Hamiltonian, and each column
+// will also hold four more elements representing the potentials between
+// neighbouring atoms.
 arma::sp_mat generateHtot(int N, int M, double xA, const arma::uvec &atomType,
                           const arma::uvec &neighbourList, double r) {
   const int numAtoms = N * M;
@@ -114,17 +122,19 @@ arma::sp_mat generateHtot(int N, int M, double xA, const arma::uvec &atomType,
   return Htot;
 }
 
-// Solve the Hamiltonian system and find its eigenvalues
+// Solve the Hamiltonian system and find its eigenvalues. If the Hamiltonian
+// is not symmetric, something is wrong with the system and a runtime error
+// is thrown.
 void solveSystem(arma::vec &eigvals, const arma::sp_mat &Htot) {
   if (Htot.is_symmetric()) {
     arma::eig_sym(eigvals, arma::mat(Htot));
   }
   else {
-    throw std::logic_error("Hamiltonian is not symmetric! ");
+    throw std::runtime_error("Hamiltonian is not symmetric! ");
   }
 }
 
-// Calculate the free energy of a system
+// Calculate the free energy $F$ of a system
 double getFreeEnergy(double beta, const arma::vec &eigvals) {
   double freeEnergy = 0;
   // #pragma omp parallel for schedule(static) reduction(+:freeEnergy)
@@ -132,10 +142,14 @@ double getFreeEnergy(double beta, const arma::vec &eigvals) {
     freeEnergy += std::log(1.0 + std::exp(-beta * eigvals(i)));
   }
   freeEnergy *= -1.0/beta;
+  if (freeEnergy > 0) {
+    throw std::runtime_error("Free energy is positive, something went wrong. ");
+  }
   return freeEnergy;
 }
 
-// Calculate the enthalpy of one system returned from a Monte Carlo-run.
+// Calculate the enthalpy $\Delta F$ of one system returned from a Monte Carlo
+// simulation.
 double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int maxIterations, double r) {
   const int numAtoms = N * M;
   arma::vec eigvalsA, eigvalsB, eigvalsBest;
@@ -161,7 +175,7 @@ double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int ma
 // different x_A values and return them.
 arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma::uvec &iterationCount, double r) {
   const int points = N * M;
-  const int averageIterations = 1;
+  const int averageIterations = 5;
   iterationCount.resize(points);
   iterationCount.fill(0);
   arma::vec enthalpys(points);

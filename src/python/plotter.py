@@ -85,18 +85,15 @@ def findPotentials():
     Vaa = 5.0 * ((0.8/r)**6 - np.exp(-r/1.95))
     Vbb = 6.0 * ((0.7/r)**6 - np.exp(-r/0.70))
     Vab = 4.5 * ((0.85/r)**6 - np.exp(-r/1.90))
-    Vsum = 0.5*(Vaa + Vbb)
 
     fig, axes = plt.subplots()
     axes.plot(r, Vaa, label="$V_{AA}$")
     axes.plot(r, Vab, label="$V_{AB}$")
     axes.plot(r, Vbb, label="$V_{BB}$")
-    #axes.plot(r, Vsum, label="$(V_{AA}+V_{BB})/2$")
 
 
     axes.axvline(0.9, linestyle="--", color="black", alpha=0.5)
     axes.axvline(1.3, linestyle="--", color="black", alpha=0.5)
-    #axes.axhline(0.0, linestyle="--", color="black", alpha=0.5)
 
     axes.set_xlabel("Atom distance $r$ [Å]")
     axes.set_ylabel("Potential $V_{n_1 n_2}$ [eV]")
