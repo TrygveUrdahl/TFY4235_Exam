@@ -32,7 +32,7 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
     //  worstAtomConfig = atomType;
     //}
   }
-  std::cout << "Best energy from random generation: " << bestEnergy << std::endl;
+  std::cout << "\tBest energy from random generation: " << bestEnergy << std::endl;
   atomType = bestAtomConfig;
   arma::uvec nextUse = atomType;
   double lastEnergy = bestEnergy;
@@ -70,16 +70,16 @@ arma::uvec monteCarloBestShuffle(int N, int M, double xA, double beta, int &iter
       notChanged++;
     }
     if (notChanged > maxIterations * 0.2) {
-      std::cout << "Converge! " << std::endl;
+      std::cout << "\tConvergence criterion reached. " << std::endl;
       converge = true;
     }
     if (converge) {
-      std::cout << "Best energy after flipping: " << bestEnergy << std::endl;
-      std::cout << "Iterations run: " << iterations << std::endl;
+      std::cout << "\tBest energy after flipping: " << bestEnergy << std::endl;
+      std::cout << "\tIterations run: " << iterations << std::endl;
       return bestAtomConfig;
     }
   }
-  std::cout << "Best energy after flipping: " << bestEnergy << std::endl;
-  std::cout << "Iterations run: " << iterations << std::endl;
+  std::cout << "\tBest energy after flipping: " << bestEnergy << std::endl;
+  std::cout << "\tIterations run: " << iterations << std::endl;
   return bestAtomConfig;
 }

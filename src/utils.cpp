@@ -119,6 +119,9 @@ arma::sp_mat generateHtot(int N, int M, double xA, const arma::uvec &atomType,
     Htot(i, neighbourList(4 * i + 2)) = V(r, currentAtom, atomType(neighbourList(4 * i + 2))); //V_nn
     Htot(i, neighbourList(4 * i + 3)) = V(r, currentAtom, atomType(neighbourList(4 * i + 3))); //V_nn
   }
+  if (!Htot.is_symmetric()) {
+    throw std::runtime_error("Hamiltonian is not symmetric! ");
+  }
   return Htot;
 }
 
@@ -152,6 +155,7 @@ double getFreeEnergy(double beta, const arma::vec &eigvals) {
 // simulation.
 double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int maxIterations, double r) {
   const int numAtoms = N * M;
+  // Calculate fA and fB for enthalpy
   arma::vec eigvalsA, eigvalsB, eigvalsBest;
   static const arma::uvec atomTypesA = generateAtomTypeVec(numAtoms, 1.0);
   static const arma::uvec atomTypesB = generateAtomTypeVec(numAtoms, 0.0);
@@ -163,6 +167,7 @@ double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int ma
   static const double fA = getFreeEnergy(beta, eigvalsA);
   static const double fB = getFreeEnergy(beta, eigvalsB);
 
+  // Get the best (or close to best) F for a system
   const arma::uvec bestShuffle = monteCarloBestShuffle(N, M, xA, beta, iterations, maxIterations, r);
   const arma::sp_mat HtotBest = generateHtot(N, M, xA, bestShuffle, neighbourList, r);
   solveSystem(eigvalsBest, HtotBest);
@@ -175,7 +180,7 @@ double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int ma
 // different x_A values and return them.
 arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma::uvec &iterationCount, double r) {
   const int points = N * M;
-  const int averageIterations = 5;
+  const int averageIterations = 1; // Change if averageing is wanted
   iterationCount.resize(points);
   iterationCount.fill(0);
   arma::vec enthalpys(points);
@@ -194,7 +199,6 @@ arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma:
   }
   iterationCount /= averageIterations;
   enthalpysAveraged /= averageIterations;
-  std::cout << enthalpysAveraged << std::endl;
   return enthalpysAveraged;
 }
 

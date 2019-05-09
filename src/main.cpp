@@ -11,10 +11,11 @@
 int main(int argc, char** argv) {
   arma::arma_rng::set_seed_random();
   if (argc < 3) {
+    std::cout << "---WRONG PROGRAM ARGUMENTS GIVEN--- " << std::endl;
     std::cout << "Requires argument(s): " << std::endl;
     std::cout << "\tint N: problemsize in 1st dir" << std::endl;
     std::cout << "\tint M: problemsize in 2nd dir" << std::endl;
-    std::cout << "\tint job: which job to do" << std::endl;
+    std::cout << "\tint job: which job to do (0, 1, or 2)" << std::endl;
     std::cout << "Voluntary argument(s): " << std::endl;
     std::cout << "\tint iterations: how many iterations to maximally do (default 1000)" << std::endl;
     std::cout << "\tfloat xA: how many of the atoms are of type A (default 0.5)" << std::endl;
@@ -23,6 +24,7 @@ int main(int argc, char** argv) {
 
     throw std::logic_error("Wrong program arguments! ");
   }
+  // Get program argument variables
   const int N = std::atoi(argv[1]);
   const int M = std::atoi(argv[2]);
   const int job = std::atoi(argv[3]);
@@ -43,7 +45,8 @@ int main(int argc, char** argv) {
   if(argc > 7) {
     beta = std::atof(argv[7]);
   }
-
+  std::cout << "Initializations complete, starting job. " << std::endl;
+  // Select which job to run
   if (job == 0) {
     std::cout << "Calculate eigenenergys of a system. " << std::endl;
     const arma::uvec neighbourVec = generateNeighbourVec(N, M);
@@ -54,15 +57,14 @@ int main(int argc, char** argv) {
     eigvals.save("../output/eigvals.h5", arma::hdf5_binary);
   }
   else if (job == 1) {
-    std::cout << "Find a best configuration to minimize free energy" << std::endl;
+    std::cout << "Find a best configuration to minimize free energy. " << std::endl;
     int iterationsDone = 0;
     arma::uvec bestConfig = monteCarloBestShuffle(N, M, xA, beta, iterationsDone, iterations, r);
-    // std::cout << bestConfig << std::endl;
     const arma::umat bestConfigMat = arma::reshape(arma::umat(bestConfig.memptr(), bestConfig.n_elem, true, false), N, M);
     bestConfigMat.save("../output/config.h5", arma::hdf5_binary);
   }
   else if (job == 2) {
-    std::cout << "Get enthalpy evolution of systems" << std::endl;
+    std::cout << "Get enthalpy evolution of systems. " << std::endl;
     arma::uvec iterationCount;
     const arma::vec enthalpys = getEnthalpyChanges(N, M, beta, iterations, iterationCount, r);
     enthalpys.save("../output/enthalpys.h5", arma::hdf5_binary);
