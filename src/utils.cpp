@@ -74,31 +74,31 @@ double V(double r, int atom1, int atom2) {
     constexpr double gammaAA = 0.80;
     constexpr double etaAA = 1.95;
     const double value = epsilonAA * (std::pow(gammaAA/r, 6)  - std::exp(-r/etaAA));
-    return value; // V_AA
+    return value; // $V_{AA}$
   }
   else if (atom1 == 1 && atom2 == 1) {
     constexpr double epsilonBB = 6.0;
     constexpr double gammaBB = 0.70;
     constexpr double etaBB = 0.70;
     const double value = epsilonBB * (std::pow(gammaBB/r, 6)  - std::exp(-r/etaBB));
-    return value; // V_BB
+    return value; // $V_{BB}$
   }
   else {
     constexpr double epsilonAB = 4.5;
     constexpr double gammaAB = 0.85;
     constexpr double etaAB = 1.90;
     const double value = epsilonAB * (std::pow(gammaAB/r, 6)  - std::exp(-r/etaAB));
-    return value; //V_AB
+    return value; // $V_{AB}$
   }
 }
 
 // Return the Hamiltonian of atom A or B
 double H(int atom1) {
   if (atom1 == 0) {
-    return 0.20; // H_A
+    return 0.20; // $H_A$
   }
   else {
-    return 0.25; // H_B
+    return 0.25; // $H_B$
   }
 }
 
@@ -110,14 +110,13 @@ arma::sp_mat generateHtot(int N, int M, double xA, const arma::uvec &atomType,
                           const arma::uvec &neighbourList, double r) {
   const int numAtoms = N * M;
   arma::sp_mat Htot(numAtoms, numAtoms);
-  // #pragma omp parallel for
   for (int i = 0; i < numAtoms; i++) {
     const int currentAtom = atomType(i);
-    Htot(i,                        i) = H(currentAtom); // H_n
-    Htot(i, neighbourList(4 * i + 0)) = V(r, currentAtom, atomType(neighbourList(4 * i + 0))); // V_nn
-    Htot(i, neighbourList(4 * i + 1)) = V(r, currentAtom, atomType(neighbourList(4 * i + 1))); //V_nn
-    Htot(i, neighbourList(4 * i + 2)) = V(r, currentAtom, atomType(neighbourList(4 * i + 2))); //V_nn
-    Htot(i, neighbourList(4 * i + 3)) = V(r, currentAtom, atomType(neighbourList(4 * i + 3))); //V_nn
+    Htot(i,                        i) = H(currentAtom); // $H_n$
+    Htot(i, neighbourList(4 * i + 0)) = V(r, currentAtom, atomType(neighbourList(4 * i + 0))); // $V_{nn}$
+    Htot(i, neighbourList(4 * i + 1)) = V(r, currentAtom, atomType(neighbourList(4 * i + 1))); // $V_{nn}$
+    Htot(i, neighbourList(4 * i + 2)) = V(r, currentAtom, atomType(neighbourList(4 * i + 2))); // $V_{nn}$
+    Htot(i, neighbourList(4 * i + 3)) = V(r, currentAtom, atomType(neighbourList(4 * i + 3))); // $V_{nn}$
   }
   if (!Htot.is_symmetric()) {
     throw std::runtime_error("Hamiltonian is not symmetric! ");
@@ -140,7 +139,7 @@ void solveSystem(arma::vec &eigvals, const arma::sp_mat &Htot) {
 // Calculate the free energy $F$ of a system
 double getFreeEnergy(double beta, const arma::vec &eigvals) {
   double freeEnergy = 0;
-  // #pragma omp parallel for schedule(static) reduction(+:freeEnergy)
+  // #pragma omp parallel for schedule(static) reduction(+:freeEnergy) // Causes slow-down because of overhead
   for (int i = 0; i < eigvals.n_elem; i++) {
     freeEnergy += std::log(1.0 + std::exp(-beta * eigvals(i)));
   }
@@ -151,56 +150,6 @@ double getFreeEnergy(double beta, const arma::vec &eigvals) {
   return freeEnergy;
 }
 
-// Calculate the enthalpy $\Delta F$ of one system returned from a Monte Carlo
-// simulation.
-double getEnthalpy(int N, int M, double beta, double xA, int &iterations, int maxIterations, double r) {
-  const int numAtoms = N * M;
-  // Calculate fA and fB for enthalpy
-  arma::vec eigvalsA, eigvalsB, eigvalsBest;
-  static const arma::uvec atomTypesA = generateAtomTypeVec(numAtoms, 1.0);
-  static const arma::uvec atomTypesB = generateAtomTypeVec(numAtoms, 0.0);
-  static const arma::uvec neighbourList = generateNeighbourVec(N, M);
-  static const arma::sp_mat HtotA = generateHtot(N, M, 1.0, atomTypesA, neighbourList, r);
-  static const arma::sp_mat HtotB = generateHtot(N, M, 0.0, atomTypesB, neighbourList, r);
-  solveSystem(eigvalsA, HtotA);
-  solveSystem(eigvalsB, HtotB);
-  static const double fA = getFreeEnergy(beta, eigvalsA);
-  static const double fB = getFreeEnergy(beta, eigvalsB);
-
-  // Get the best (or close to best) F for a system
-  const arma::uvec bestShuffle = monteCarloBestShuffle(N, M, xA, beta, iterations, maxIterations, r);
-  const arma::sp_mat HtotBest = generateHtot(N, M, xA, bestShuffle, neighbourList, r);
-  solveSystem(eigvalsBest, HtotBest);
-  const double fBest = getFreeEnergy(beta, eigvalsBest);
-
-  return (fBest - fA*xA - fB * (1.0 - xA));
-}
-
-// Calculate enthalpy changes for all x_A values and iteration counters for the
-// different x_A values and return them.
-arma::vec getEnthalpyChanges(int N, int M, double beta, int maxIterations, arma::uvec &iterationCount, double r) {
-  const int points = N * M;
-  const int averageIterations = 1; // Change if averageing is wanted
-  iterationCount.resize(points);
-  iterationCount.fill(0);
-  arma::vec enthalpys(points);
-  arma::vec enthalpysAveraged(points, arma::fill::zeros);
-  arma::vec xAs = arma::linspace(0, 1, points);
-  for (int ii = 0; ii < averageIterations; ii++) {
-    arma::uvec iterationCountLocal(points);
-    #pragma omp parallel for
-    for (int i = 0; i < points; i++) {
-      int iterations = 0;
-      enthalpys(i) = getEnthalpy(N, M, beta, xAs(i), iterations, maxIterations, r);
-      iterationCountLocal(i) = iterations;
-    }
-    iterationCount += iterationCountLocal;
-    enthalpysAveraged += enthalpys;
-  }
-  iterationCount /= averageIterations;
-  enthalpysAveraged /= averageIterations;
-  return enthalpysAveraged;
-}
 
 // Calculate the Hamming distance between two atom configurations. Considered
 // to use this for the convergence criterion, but it did not work out as I hoped.
